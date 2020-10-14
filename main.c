@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// AdjacentList and graph data structure
 struct AdjListNode
 {
     int dest;
@@ -88,6 +89,13 @@ void deleteArray(char **arr, int size){
     }
     free(arr);
 }
+void deleteArrayBool(int **arr, int size){
+    // Deallocate the memory
+    for ( int i = 0; i < size; i++ ){
+        free(arr[i]);
+    }
+    free(arr);
+}
 
 void deleteGraph(struct Graph *g, int V){
     for (int i=0; i < V; i++ ){
@@ -127,6 +135,13 @@ char **createArray(int row, int col){
     for ( int i = 0; i < row; i++ ){
         arr[i] = (char*) malloc(col*sizeof(char));
     }
+    return arr;
+}
+// Create a bool array
+int *createArrayBool(int size ){
+    // Allocate memory for 2D array
+    int *arr = (int*) calloc(size,sizeof(int));
+
     return arr;
 }
 
@@ -181,6 +196,41 @@ void printAdjVertexSorted( struct Graph *g, int V, char **indexArr){
     printf("\n");
 }
 
+void BFS(struct Graph *g, int source ){
+    int v = source;
+    int u=0;
+
+    // Error check at lease one node
+    if (g == NULL){
+        return;
+    }
+    int numberNodes = g->V;
+    if (numberNodes < 1){
+        return;
+    }
+    // Create a bool array / free later
+    int *visited = createArrayBool(numberNodes);
+    // Mark entry node as visited
+    visited[v]=1;
+
+    printf("\n");
+
+    while( g->array[v].head != NULL ){
+        u = g->array[v].head->dest;
+        visited[u] = 1;
+        printf("%d ",g->array[v].head->dest);
+        g->array[v].head = g->array[v].head->next;
+    }
+
+    // Traverse if the tree if there are disconnected nodes
+
+    // Print the visited matrix
+    printf("\n\n");
+    for (int i = 0; i < numberNodes; ++i) {
+        printf("boolArr[%d]:%d  ", i, visited[i]);
+    }
+
+}
 int main( int argc, char *argv[argc+1]) {
 
     //File name from arguments
@@ -244,7 +294,8 @@ int main( int argc, char *argv[argc+1]) {
     fclose(fp);
 
     printGraph(graph,indexArr);
-
+    printf("size g: %d\n",graph->V);
+    BFS(graph,1);
     // Deallocate memory and graph
     deleteArray(indexArr,size);
     deleteGraph(graph,size);
