@@ -1,6 +1,62 @@
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// Queue data structure
+struct Queue {
+    int front, rear, size;
+    unsigned capacity;
+    int* array;
+};
+
+struct Queue* createQueue(unsigned capacity){
+    struct Queue* queue = (struct Queue*)malloc(sizeof(struct Queue));
+    queue->capacity = capacity;
+    queue->front = queue->size = 0;
+
+    // This is important, see the enqueue
+    queue->rear = capacity - 1;
+    queue->array = (int*)malloc(queue->capacity * sizeof(int));
+    return queue;
+}
+// Queue is full when size becomes
+// equal to the capacity
+int isFull(struct Queue* queue)
+{
+    return (queue->size == queue->capacity);
+}
+
+// Queue is empty when size is 0
+int isEmpty(struct Queue* queue)
+{
+    return (queue->size == 0);
+}
+
+// Function to add an item to the queue.
+// It changes rear and size
+void enqueue(struct Queue* queue, int item)
+{
+    if (isFull(queue))
+        return;
+    queue->rear = (queue->rear + 1)
+                  % queue->capacity;
+    queue->array[queue->rear] = item;
+    queue->size = queue->size + 1;
+    //printf("%d enqueued to queue\n", item);
+}
+
+// Function to remove an item from queue.
+// It changes front and size
+int dequeue(struct Queue* queue)
+{
+    if (isEmpty(queue))
+        return INT_MIN;
+    int item = queue->array[queue->front];
+    queue->front = (queue->front + 1) % queue->capacity;
+    queue->size = queue->size - 1;
+    return item;
+}
 
 // AdjacentList and graph data structure
 struct AdjListNode
@@ -38,7 +94,7 @@ struct Graph* createGraph(int V)
     // Allocate memory for an  array
     graph->array = (struct AdjList*) malloc(V * sizeof(struct AdjList));
 
-    // Initialized adjancent
+    // Initialized adjacent
     for (int i = 0; i < V; ++i)
         graph->array[i].head = NULL;
 
@@ -85,13 +141,6 @@ void deleteArray(char **arr, int size){
     // Deallocate the memory
     for ( int i = 0; i < size; i++ )
     {
-        free(arr[i]);
-    }
-    free(arr);
-}
-void deleteArrayBool(int **arr, int size){
-    // Deallocate the memory
-    for ( int i = 0; i < size; i++ ){
         free(arr[i]);
     }
     free(arr);
@@ -196,10 +245,70 @@ void printAdjVertexSorted( struct Graph *g, int V, char **indexArr){
     printf("\n");
 }
 
-void BFS(struct Graph *g, int source ){
-    int v = source;
-    int u=0;
+void insertionSort(int arr[], int size){
+    int i, key, j;
+    for (i = 1; i < size; i++) {
+        key = arr[i];
+        j = i - 1;
 
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = key;
+    }
+}
+
+void printArraySorted(int arr[], int n)
+{
+    int i;
+    for (i = 0; i < n; i++)
+        printf("%d ", arr[i]);
+    printf("\n");
+}
+
+void printArrayNumToLetters(const int *arrNum, char **arrLetters, int size){
+    for (int i = 0; i < size; ++i) {
+        int index = arrNum[i];
+        printf("%s",arrLetters[index]);
+    }
+    printf("\n");
+}
+
+void sortGraph(struct Graph *g) {
+    if (g == NULL){
+        return;
+    }
+    for (int i = 0; i < g->V; ++i) {
+        //IF null then only has one note;
+        struct AdjListNode *ptr = g->array[i].head;
+        struct AdjListNode *first = g->array[i].head;
+        if (ptr == NULL) {
+            continue;
+        }
+        int degree = getDegreeVertex(g, i, "d");
+        int *holder = (int *) malloc(degree * sizeof(int));
+        int p = 0;
+
+        while (ptr != NULL) {
+            holder[p] = ptr->dest;
+            p++;
+            ptr = ptr->next;
+        }
+        insertionSort(holder, degree);
+        int q = 0;
+        while (first != NULL){
+            first->dest = holder[q];
+            q++;
+            first = first->next;
+        }
+        //printArraySorted(holder,degree);
+        free(holder);
+    }
+}
+void BFS(struct Graph *g, int source, char **arrIndex){
+    int v = source;
+    int u;
     // Error check at lease one node
     if (g == NULL){
         return;
@@ -208,29 +317,40 @@ void BFS(struct Graph *g, int source ){
     if (numberNodes < 1){
         return;
     }
+    // Create a Queue
+    struct Queue *queue = createQueue(numberNodes);
     // Create a bool array / free later
     int *visited = createArrayBool(numberNodes);
+
+    //printf("%d ",v);
+    printf("%s ",arrIndex[v]);
     // Mark entry node as visited
     visited[v]=1;
+    // Create queue of nodes
+    enqueue(queue,v);
+    while (!isEmpty(queue)) {
+        v = dequeue(queue);
+        struct AdjListNode *ptr = g->array[v].head;
+        while (ptr != NULL){
+            u = ptr->dest;
+            if ( visited[u] == 0 ){
+                //printf("%d ",u);
+                printf("%s ",arrIndex[u]);
+                visited[u]=1;
+                enqueue(queue,u);
+            }
+            ptr = ptr->next;
+        }
 
-    printf("\n");
-
-    while( g->array[v].head != NULL ){
-        u = g->array[v].head->dest;
-        visited[u] = 1;
-        printf("%d ",g->array[v].head->dest);
-        g->array[v].head = g->array[v].head->next;
     }
-
     // Traverse if the tree if there are disconnected nodes
 
-    // Print the visited matrix
-    printf("\n\n");
-    for (int i = 0; i < numberNodes; ++i) {
-        printf("boolArr[%d]:%d  ", i, visited[i]);
-    }
-
+    printf("\n");
+    // Free the queue
+    free(queue);
+    free(visited);
 }
+
 int main( int argc, char *argv[argc+1]) {
 
     //File name from arguments
@@ -273,7 +393,7 @@ int main( int argc, char *argv[argc+1]) {
     }
     // Close the file 1
     fclose(fp);
-
+    sortGraph(graph);
     // NEXT FILE
     fp = fopen( argv[2], "r");
     if ( fp == NULL ){
@@ -287,15 +407,14 @@ int main( int argc, char *argv[argc+1]) {
             printf("Error Vertex does not exist\n");
             continue;
         }
-        printf("Vertex: %s\n", tmp0);
-
+        //printf("Vertex: %s\n", tmp0);
+        BFS(graph,vertex,indexArr);
     }
     // Close the file 2
     fclose(fp);
 
-    printGraph(graph,indexArr);
-    printf("size g: %d\n",graph->V);
-    BFS(graph,1);
+    //printGraph(graph,indexArr);
+
     // Deallocate memory and graph
     deleteArray(indexArr,size);
     deleteGraph(graph,size);
