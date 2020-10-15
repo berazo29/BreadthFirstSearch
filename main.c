@@ -11,39 +11,34 @@ struct Queue {
 };
 
 struct Queue* createQueue(unsigned capacity){
+
     struct Queue* queue = (struct Queue*)malloc(sizeof(struct Queue));
     queue->capacity = capacity;
     queue->front = queue->size = 0;
 
-    // This is important, see the enqueue
     queue->rear = capacity - 1;
     queue->array = (int*)malloc(queue->capacity * sizeof(int));
     return queue;
 }
-// Queue is full when size becomes
-// equal to the capacity
+// Queue is full
 int isFull(struct Queue* queue)
 {
     return (queue->size == queue->capacity);
 }
 
-// Queue is empty when size is 0
+// Queue is empty
 int isEmpty(struct Queue* queue)
 {
     return (queue->size == 0);
 }
 
-// Function to add an item to the queue.
-// It changes rear and size
 void enqueue(struct Queue* queue, int item)
 {
     if (isFull(queue))
         return;
-    queue->rear = (queue->rear + 1)
-                  % queue->capacity;
+    queue->rear = (queue->rear + 1) % queue->capacity;
     queue->array[queue->rear] = item;
     queue->size = queue->size + 1;
-    //printf("%d enqueued to queue\n", item);
 }
 
 // Function to remove an item from queue.
@@ -350,7 +345,20 @@ void BFS(struct Graph *g, int source, char **arrIndex){
     free(queue);
     free(visited);
 }
+void sortLexically(char **arrInput, int size){
+    char temp[30];
+    for (int i = 0; i < size; ++i) {
+        for (int j = i + 1; j < size; ++j) {
 
+            // swapping strings if they are not in the lexicographical order
+            if (strcmp(arrInput[i], arrInput[j]) > 0) {
+                strcpy(temp, arrInput[i]);
+                strcpy(arrInput[i], arrInput[j]);
+                strcpy(arrInput[j], temp);
+            }
+        }
+    }
+}
 int main( int argc, char *argv[argc+1]) {
 
     //File name from arguments
@@ -383,6 +391,7 @@ int main( int argc, char *argv[argc+1]) {
         strcpy(indexArr[i], tmp);
         //printf("a[%d]:%s\n",i,indexArr[i]);
     }
+    sortLexically(indexArr,size);
     char tmp0[10];
     char tmp1[10];
     struct Graph* graph = createGraph(size);
